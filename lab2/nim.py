@@ -31,13 +31,13 @@ class Nim:
         while self:
           
             if turn == 0:
-                ply = player1(self)
-                print(f"ply: player {player1} plays {ply}")
+                ply = player1.make_move(self)
+                #print(f"ply: player {player1} plays {ply}")
                 self.nimming(ply)
                 moves1 += 1
             elif turn == 1:
-                ply = player2(self)
-                print(f"ply: player {player1} plays {ply}")
+                ply = player2.make_move(self)
+                #print(f"ply: player {player2} plays {ply}")
                 self.nimming(ply)
                 moves2 += 1
             turn = 1 - turn
@@ -45,7 +45,7 @@ class Nim:
         winner = (1-turn) + 1
               
             
-        print(f"status: Player {str(winner)} won!")
+        #print(f"status: Player {str(winner)} won!")
         return winner, moves1, moves2
 
 

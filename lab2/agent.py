@@ -16,23 +16,34 @@ from nim import *
 
 
 class NimAgent:
-    def __init__(self, genoma):
-        self.genom_strategy = genoma[0]
-        self.genom_row = genoma[1]
-        self.genoma = genoma
+    def __init__(self, genoma, interested = False):
+        self.genome_strategy = genoma[0]
+        self.genome_row = genoma[1]
+        self.strategy = self.choose_strategy()
+        self.interested = interested
+        self.genome= genoma
 
 
-    
+    def __str__(self):
+          if self.interested:
+            return "Player sotto esame:" +  self.strategy.__name__
+          else:
+            return "Second Player:" +  self.strategy.__name__
+                
+
+                    
 
     def make_move(self, nim_state) -> Nimply:
+            
             strategy = self.choose_strategy()
+            self.strategy = strategy
             return strategy(nim_state)
-        
+            #return self.strategy(nim_state)
 
 
     def choose_strategy(self):
             # Definisci le strategie disponibili
-            strategies = [self.optimal_move, self.make_genome_move, self.select_min_row, self.select_odd, self.select_even, self.random_move]
+            strategies = [self.optimal_move, self.make_genome_move, self.select_min_row, self.select_odd_row, self.select_even_row, self.random_move]
 
             # Normalizza i valori nel genoma per farli sommare a 1
             genome_sum = sum(self.genome_strategy)
@@ -47,17 +58,18 @@ class NimAgent:
 
     def random_move(self, nim_state):
             # Trova gli indici delle pile che non sono vuote
-            non_empty_piles = [i for i, num in enumerate(nim_state) if num > 0]
+            non_empty_piles = [i for i, num in enumerate(nim_state._rows) if num > 0]
 
             # Scegli una pila a caso tra quelle non vuote
             pile_index = random.choice(non_empty_piles)
 
             # Scegli un numero a caso di oggetti da rimuovere da quella pila
-            num_objects = random.randint(1, nim_state[pile_index])
+            num_objects = random.randint(1, nim_state._rows[pile_index])
 
-            return (pile_index, num_objects)
+            return Nimply(pile_index, num_objects)
     def select_min_row(self, nim_state):
             # Trova l'indice della pila con il minor numero di oggetti
+            nim_state = nim_state._rows
             min_pile_index = nim_state.index(min(i for i in nim_state if i > 0))
 
             # Se c'è solo una pila con più di 0 oggetti, rimuovi tutti gli oggetti da quella pila
@@ -73,6 +85,7 @@ class NimAgent:
         
     def select_max_row(self, nim_state):
         # Trova l'indice della pila con il maggior numero di oggetti
+                nim_state = nim_state._rows
                 max_pile_index = nim_state.index(max(nim_state))
 
                 # Se c'è solo una pila con più di 0 oggetti, rimuovi tutti gli oggetti da quella pila
@@ -87,7 +100,7 @@ class NimAgent:
         
     def select_odd_row(self, nim_state):
             # Trova gli indici delle pile con un numero dispari di oggetti
-
+            nim_state = nim_state._rows
             max_pile_index = nim_state.index(max(nim_state))
 
                 # Se c'è solo una pila con più di 0 oggetti, rimuovi tutti gli oggetti da quella pila
@@ -95,7 +108,7 @@ class NimAgent:
                     num_objects = nim_state[max_pile_index]
                     return Nimply(max_pile_index, num_objects)
 
-            odd_pile_indices = [i for i, num in enumerate(nim_state) if num % 2 == 1]
+            odd_pile_indices = [i for i, num in enumerate(nim_state) if i % 2 == 1 and num > 0]
 
             if odd_pile_indices:
                 # Se ci sono pile con un numero dispari di oggetti, scegli una di queste pile e rimuovi un oggetto
@@ -109,20 +122,20 @@ class NimAgent:
             return Nimply(pile_index, num_objects)
         
     def select_even_row(self, nim_state):
-            # Trova gli indici delle pile con un numero dispari di oggetti
-
+            # Trova gli indici delle pile con un numero massimo di oggetti
+            nim_state = nim_state._rows
             max_pile_index = nim_state.index(max(nim_state))
 
-                # Se c'è solo una pila con più di 0 oggetti, rimuovi tutti gli oggetti da quella pila
+            # Se c'è solo una pila con più di 0 oggetti, rimuovi tutti gli oggetti da quella pila
             if nim_state.count(0) == len(nim_state) - 1:
-                    num_objects = nim_state[max_pile_index]
-                    return Nimply(max_pile_index, num_objects)
+                num_objects = nim_state[max_pile_index]
+                return Nimply(max_pile_index, num_objects)
 
-            odd_pile_indices = [i for i, num in enumerate(nim_state) if num % 2 == 0]
+            even_pile_indices = [i for i, num in enumerate(nim_state) if num > 0 and i % 2 == 0]
 
-            if odd_pile_indices:
+            if even_pile_indices:
                 # Se ci sono pile con un numero dispari di oggetti, scegli una di queste pile e rimuovi un oggetto
-                pile_index = random.choice(odd_pile_indices)
+                pile_index = random.choice(even_pile_indices)
                 num_objects = 1
             else:
                 # Altrimenti, scegli una pila a caso e rimuovi un elemento da quella pila
@@ -130,34 +143,25 @@ class NimAgent:
                 num_objects = 1
 
             return Nimply(pile_index, num_objects)
-
-
-    def make_move(self, nim_state) -> Nimply:
-            optimal_move = self.find_optimal_move( nim_state)
-            if optimal_move :
-                return optimal_move
-            else:
-                return self.make_genome_move(nim_state)
-            
-        
-        
+    
     def make_genome_move(self, nim_state):
             moves = [
-                (row, min(nim_state.rows[row], max(1, int(self.genome_row[row] * nim_state.rows[row]))))
-                for row in range(len(nim_state.rows)) if nim_state.rows[row] > 0
+                (row, min(nim_state._rows[row], max(1, int(self.genome_row[row] * nim_state._rows[row]))))
+                for row in range(len(nim_state._rows)) if nim_state._rows[row] > 0
             ]
             proportional_probs = self.calculate_proportional_probs(nim_state)
             if not proportional_probs:
                 return None
-            chosen_row = random.choices(range(len(proportional_probs)), proportional_probs)[0]
-            nim_move = Nimply(moves[chosen_row][0], moves[chosen_row][1])
+            #chosen_row = random.choices(range(len(proportional_probs)), proportional_probs)[0]
+            chosen_move = max(moves, key=lambda x: self.genome_row[x[0]])
+            nim_move = Nimply(chosen_move[0], chosen_move[1])
 
             return nim_move
 
 
     def optimal_move(self, nim_state):
-            for row in range(len(nim_state.rows)):
-                for num_objects in range(1, nim_state.rows[row] + 1):
+            for row in range(len(nim_state._rows)):
+                for num_objects in range(1, nim_state._rows[row] + 1):
                     tmp = deepcopy(nim_state)
                     tmp.nimming(Nimply(row, num_objects))
                     if nim_sum(tmp) == 0:
@@ -166,6 +170,7 @@ class NimAgent:
 
 
     def calculate_proportional_probs(self, nim_state):
-        total_weight = sum(self.genome)
-        proportional_probs = [preference / total_weight for preference in self.genome]
+        total_weight = sum(self.genome_row)
+        proportional_probs = [preference / total_weight for preference in self.genome_row ]
+        return proportional_probs
 
