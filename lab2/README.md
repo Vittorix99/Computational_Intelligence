@@ -2,7 +2,7 @@
 
 ## Progetto di Laboratorio: Algoritmo Genetico per il Gioco di Nim
 
-Questo progetto di laboratorio è stato svolto in collaborazione con Antonio Ferrigno (Matricola: xxxx) e Martina Martina (Matricola: xxxxx). Nel corso di questo lavoro, abbiamo implementato un algoritmo genetico per il gioco di Nim, prendendo ispirazione e utilizzando pezzi di codice forniti da Antonio Ferrigno.
+Questo progetto di laboratorio è stato svolto in collaborazione con Antonio Ferrigno (Matricola: s316467) e Martina Martina (Matricola: s306163). Nel corso di questo lavoro, abbiamo implementato un algoritmo genetico per il gioco di Nim, prendendo ispirazione e utilizzando pezzi di codice forniti da Antonio Ferrigno.
 
 ### Descrizione del Codice
 
