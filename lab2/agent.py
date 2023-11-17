@@ -174,3 +174,6 @@ class NimAgent:
         proportional_probs = [preference / total_weight for preference in self.genome_row ]
         return proportional_probs
 
+
+
+
