@@ -51,27 +51,38 @@ class Nim:
     
     def play(self, player1, player2):
         turn = 0
-        moves1 = 0
-        moves2 = 0
+        moves = 0
+        
+        nim0_moves = 0
         while self:
           
             if turn == 0:
                 ply = player1.make_move(self)
                 #print(f"ply: player {player1} plays {ply}")
+
                 self.nimming(ply)
-                moves1 += 1
+                if player1.interested:
+                    moves += 1
+                    if player1.nim_sum == 0:
+                        nim0_moves += 1
+                        
+
             elif turn == 1:
                 ply = player2.make_move(self)
                 #print(f"ply: player {player2} plays {ply}")
                 self.nimming(ply)
-                moves2 += 1
+                if player2.interested:
+                    moves += 1
+                    if player1.nim_sum == 0:
+                        nim0_moves += 1
+              
             turn = 1 - turn
     
         winner = (1-turn) + 1
               
             
         #print(f"status: Player {str(winner)} won!")
-        return winner, moves1, moves2
+        return winner, moves, nim0_moves
 
 
 

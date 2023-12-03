@@ -23,6 +23,7 @@ def population_in( NUM_AGENTS, good_players, bad_players, num_rows):
     # Crea i "good players"
     for _ in range(num_good_players):
         strategy_weights = [np.random.uniform(0.5, 0.7), np.random.uniform(0.4, 0.6), np.random.uniform(0.1, 0.2), np.random.uniform(0, 0.2), np.random.uniform(0, 0.2), np.random.uniform(0, 0.2)]
+      
        # np.random.shuffle(strategy_weights)
         genome_move_weights = [np.random.uniform(0, 1) for _ in range(num_rows)]
         genome = (strategy_weights, genome_move_weights)
@@ -80,6 +81,7 @@ def mutate(genome, mutation_rate):
 def evaluation(population, nim, generation):
     fitness = [0 for _ in range(len(population))]
     average_moves = [0 for _ in range(len(population))]
+    nim0_percentage = [0 for _ in range(len(population))]
     # Per ogni agente nella popolazione
     for i, agent1 in enumerate(population):
         # Gioca due volte con ogni altro agente nella popolazione
@@ -89,15 +91,16 @@ def evaluation(population, nim, generation):
                 nim.reset()
                 win=0
                 agent1.interested = True
-                winner, num_moves1, _ = nim.play(agent1, agent2)
+                winner, num_moves1, nim0_moves = nim.play(agent1, agent2)
                 if winner == 1:
                     win += 1
                 average_moves[i] += num_moves1
+                nim0_percentage[i] += nim0_moves
 
                 # Una volta l'agente inizia per secondo
                 nim.reset()
-                winner, _ ,num_moves2 = nim.play(agent2, agent1)
-                
+                winner,num_moves2, nim0_moves = nim.play(agent2, agent1)
+                nim0_percentage[i] += nim0_moves
                 if winner == 2:
                     win += 1
                 
@@ -106,15 +109,15 @@ def evaluation(population, nim, generation):
                 if win == 2:
                     fitness[i] += 2 
                 if win == 0:
-                    
-                    
                     fitness[i] -= 1
-                    
 
-        average_moves[i] /= (len(population) - 1) * 2
+                    
+                    
+    
+        nim0_percentage[i] = (nim0_percentage[i] / average_moves[i]) * 100
         fitness[i] = fitness[i] + generation*2
         fitness[i] -= int(average_moves[i]) 
-    return fitness , average_moves
+    return nim0_percentage, average_moves
 
 def reproduce(selected):
      new_population = []
@@ -175,7 +178,7 @@ def replacement(population, new_population, fitness_scores):
 def evolution_strategy():
 
     population_init  = population_in(NUM_AGENTS, GOOD_PLAYERS, BAD_PLAYERS, NUM_ROWS)
-    generations = 20
+    generations = 100
     best_fitness = -1 
     nim = Nim(NUM_ROWS)
     bests = []

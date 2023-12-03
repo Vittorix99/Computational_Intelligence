@@ -4,9 +4,9 @@ from genetic import *
 if __name__ == "__main__":
 
 
-   #best_agent = evolution_strategy()
-    #np.save("genome_strategy.npy", best_agent.genome_strategy)
-    #np.save("genome_row.npy", best_agent.genome_row)
+    best_agent = evolution_strategy()
+    np.save("genome_strategy.npy", best_agent.genome_strategy)
+    np.save("genome_row.npy", best_agent.genome_row)
 
     nim = Nim(NUM_ROWS)
 

@@ -23,6 +23,7 @@ class NimAgent:
         self.strategy = self.choose_strategy()
         self.interested = interested
         self.genome= genoma
+        self.nim_sum = -1;
 
 
     def __str__(self):
@@ -38,13 +39,23 @@ class NimAgent:
             
             strategy = self.choose_strategy()
             self.strategy = strategy
-            return strategy(nim_state)
+            ret =  strategy(nim_state)
+            tmp = deepcopy(nim_state)
+            tmp.nimming(ret)
+            nimsum = nim_sum(tmp)
+            self.nim_sum = nimsum
+            return ret
+            
+           
+
+
+
             #return self.strategy(nim_state)
 
 
     def choose_strategy(self):
             # Definisci le strategie disponibili
-            strategies = [self.optimal_move, self.make_genome_move, self.select_min_row, self.select_odd_row, self.select_even_row, self.random_move]
+            strategies = [self.make_genome_move, self.select_min_row, self.select_odd_row, self.gabriele, self.select_even_row, self.random_move]
 
             # Normalizza i valori nel genoma per farli sommare a 1
             genome_sum = sum(self.genome_strategy)
@@ -56,6 +67,10 @@ class NimAgent:
             return strategy
 
 
+    def gabriele(self,state: Nim) -> Nimply:
+        """Pick always the maximum possible number of the lowest row"""
+        possible_moves = [(r, o) for r, c in enumerate(state._rows) for o in range(1, c + 1)]
+        return Nimply(*max(possible_moves, key=lambda m: (-m[0], m[1])))
 
     def random_move(self, nim_state):
             # Trova gli indici delle pile che non sono vuote
