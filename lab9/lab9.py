@@ -2,6 +2,8 @@ import random
 import numpy as np
 import itertools
 import lab2_lib as lib
+import matplotlib.pyplot as plt
+
 
 
 
@@ -84,7 +86,7 @@ if __name__ == "__main__":
     crossover_rates = [0.6, 0.8, 1]
     mutation_rate = 0.1
     population_sizes = [20, 50, 100]
-    convrgence_generations = 100
+    convrgence_generations = 20
     problem_istances = [lib.make_problem(n) for n in instances]
     highest_fitnesses_per_params_combination = {}
     best_configuration_generations = {}
@@ -172,29 +174,48 @@ if __name__ == "__main__":
     print(best_stats_per_instance)
     print(best_generations_per_instance)
 
+    for problem_instance_number, problem in zip(instances, problem_istances):
+        
+        best_stats  = best_stats_per_instance[problem_instance_number]
+        best_generations = best_generations_per_instance[problem_instance_number]
+        best_configuration = best_stats[0][0]
+        highest_fitness = best_stats[0][1]
+        fitness_calls = best_stats[0][2]
+        
+        if best_configuration:
+            plt.figure()
+            plt.plot(range(len(best_generations)), best_generations, marker='o')
+            title = f"Best Configuration for Problem Instance {problem_instance_number}: Population Size={best_configuration[2]}, Crossover Rate={best_configuration[1]}, Tournament Size={best_configuration[0]}, Max Generations=100 (Fitness value: {highest_fitness}, Fitness Calls: {fitness_calls})"
+            plt.title(title)
+            plt.xlabel("Generations")
+            plt.ylabel("Best Fitness")
+            plt.grid(True)
+            plt.show()
+            
+   
 
+
+
+
+
+
+            
+            
+
+            
+
+
+
+
+        
+
+                    
 
 
 
 
 
         
-        
-
-        
-
-
-
-
-    
-
-                
-
-
-
-
-
-    
 
 
 
