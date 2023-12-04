@@ -180,7 +180,7 @@ if __name__ == "__main__":
         best_generations = best_generations_per_instance[problem_instance_number]
         best_configuration = best_stats[0][0]
         highest_fitness = best_stats[0][1]
-        fitness_calls = best_stats[0][2]
+        min_fitness_calls = best_stats[1][1]
         
         if best_configuration:
             plt.figure()
@@ -191,8 +191,8 @@ if __name__ == "__main__":
             plt.ylabel("Best Fitness")
             plt.grid(True)
             plt.show()
-            
-   
+        
+        print(f"the least number of fitness calls for problem instance {problem_instance_number} is {min_fitness_calls} with the following configuration: {best_stats[1][0]}")   
 
 
 
