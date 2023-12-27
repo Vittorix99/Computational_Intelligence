@@ -1,5 +1,9 @@
 from tictactoe import *
 import random
+import os
+import json
+import seaborn as sns
+
 
 map_2d_1d = {(0, 0): 0, (0, 1): 1,(0, 2): 2, (1, 0): 3, (1, 1): 4,(1, 2): 5,(2, 0): 6,(2, 1): 7,(2, 2): 8}
 
@@ -24,8 +28,10 @@ def initialize_Q(S):
 
 t_board_X = TicTacToe(player = 'X',reward_type ='goal_reward')
 t_board_O = TicTacToe(player = 'O',reward_type ='goal_reward')
+
 States_X = t_board_X.my_states
 States_O = t_board_O.my_states
+
 Q_X = initialize_Q(States_X)
 Q_O = initialize_Q(States_O)
 
@@ -105,7 +111,6 @@ def play_games(n_games,Q_X,Q_O,X_strategy = 'eps_greedy',O_strategy='eps_greedy'
             O_first_actions,winning_X_first_actions,winning_O_first_actions
 
 
-
 def train(n_games=1000,alpha = 0.5, gamma = 0.9,train_X=True,train_O=False,is_random=True,**kwargs):
     """
     Function to train a player in a game of tic-tac-toe
@@ -175,7 +180,7 @@ def train(n_games=1000,alpha = 0.5, gamma = 0.9,train_X=True,train_O=False,is_ra
         eps = eps_(train_X,i)
         
             
-        x_action = t_board_X.pick_best_action(Q_X, action_type = X_action_type, eps=eps)
+        x_action = t_board_X.pick_best_action(Q_X,action_type = X_action_type,eps=eps)
         x_action1d = t_board_X.b2_to_s1[x_action]
         
         R_X = t_board_X.my_move(x_action) # make move on X's board
@@ -252,10 +257,10 @@ def train(n_games=1000,alpha = 0.5, gamma = 0.9,train_X=True,train_O=False,is_ra
         rewards = rewards_O
         
     sns.set(font_scale=1)
-    m_avg = moving_average(rewards,w=200)
-    sns.lineplot(x=range(len(m_avg)),y=m_avg).set_title('Learning Curve')
-    plt.show()
-        
+    m_avg = moving_average(rewards, w=200)
+    sns.lineplot(x=range(len(m_avg)), y=m_avg).set_title('Learning Curve')
+
+    plt.savefig(f'learning_curve_trainX_{train_X}_trainO_{train_O}')  # Save the plot as a PNG file
     return Q_X,Q_O,rewards_X,rewards_O
 
 
@@ -323,6 +328,96 @@ def get_win_rate(first_actions_list,winning_first_actions_list):
     return win_rate    
 
 
+def get_win_seqs(winning_sequences_list):
+    "Get winning sequence stats in appropriate format from experiment results"
+    temp_dict = dict(Counter(winning_sequences_list))
+    win_seq_df = pd.DataFrame({'winning_sequence':list(temp_dict.keys()),'N':list(temp_dict.values())})
+    
+    return win_seq_df
 
 
 
+def plot_results(win_statistics, description=None):
+    "Function to visualize results of experiments"
+    sns.set(font_scale=1.5)  # Adjust font scale for readability
+    final_results, winning_sequences, first_actions_X, first_actions_O = win_statistics
+
+    # Preparazione dei dati per il plotting
+    win_stats_df_long = pd.melt(final_results, var_name='Result', value_name='N')
+    final_results_agg = pd.DataFrame(final_results.apply(sum, 0), columns=["N"])
+    final_results_agg.reset_index(level=0, inplace=True)
+    win_rate_X = get_win_rate(*first_actions_X)
+    win_rate_O = get_win_rate(*first_actions_O)
+    win_seq_X = get_win_seqs(winning_sequences[0])
+    win_seq_O = get_win_seqs(winning_sequences[1])
+
+    # Creazione di figure multiple per evitare confusione
+    fig1, axs1 = plt.subplots(nrows=1, ncols=3, figsize=(18, 6))
+    sns.boxplot(x="Result", y="N", data=win_stats_df_long, ax=axs1[0]).set_title("Distribution of Wins, Losses and Ties")
+    sns.barplot(x="index", y="N", data=final_results_agg, ax=axs1[1]).set_title('Total No of Wins, Losses and Ties')
+    sns.heatmap(win_rate_X, annot=True, ax=axs1[2]).set_title("Player X: % of wins for first move")
+    fig1.savefig("figures/"+description+"_fig1.png")
+
+    fig2, axs2 = plt.subplots(nrows=1, ncols=3, figsize=(18, 6))
+    sns.heatmap(win_rate_O, annot=True, ax=axs2[0]).set_title("Player O: % of wins for first move")
+    sns.barplot(x='winning_sequence', y='N', data=win_seq_X, order=['R1','R2','R3','C1','C2','C3','D1','D2'], ax=axs2[1]).set_title("Player X: winning sequences")
+    sns.barplot(x='winning_sequence', y='N', data=win_seq_O, order=['R1','R2','R3','C1','C2','C3','D1','D2'], ax=axs2[2]).set_title("Player O: winning sequences")
+    fig1.savefig("figures/"+description+"_fig2.png")
+
+
+# Assicurati di avere le funzioni get_win_rate e get_win_seqs definite o importate in modo appropriato
+
+     
+
+
+
+
+
+
+
+
+
+if __name__ == "__main__":
+
+    np.random.seed(1)
+
+    #Random X Vs Traiined O
+    #TRAINED X Vs RANDOM O
+
+  
+
+    Q_O = initialize_Q(States_O)
+    Q_X = initialize_Q(States_X)
+
+
+   
+    #Trained X vs Random O  
+    print("================================================")
+    print("Trained X vs Random O")
+    Q_X_trained,_, rewards_X, rewards_O = train(n_games=10000,train_X=True,train_O=False,is_random=True)
+    print("================================================")
+    print("Testing Trained X vs Random O")
+    win_stats = get_win_statistics(Q_X=Q_X_trained,Q_O=Q_O,sets=5,games_in_set=100, X_strategy='eps_greedy', O_strategy='random', eps_X=0.05, eps_O=1.0, )
+    plot_results(win_stats, description="Trained_X_vs_Random_O")
+    # Save win_stats to a file
+
+
+    # ...
+    print("================================================")
+    print("Random X vs Trained O")
+    _, Q_O_trained, rewards_X, rewards_O = train(n_games=10000,train_X=False,train_O=True,is_random=True)
+    print("================================================")
+    print("Testing Random X vs Trained O")
+    win_stats2 = get_win_statistics(Q_X=Q_X,Q_O=Q_O_trained,sets=5,games_in_set=100, X_strategy='random', O_strategy='eps_greedy', eps_X=1.0, eps_O=0.05)
+    plot_results(win_stats2, description="Random_X_vs_Trained_O")
+    # Save win_stats2 to a file
+
+    # ...
+    print("================================================")
+    print("Trained X vs Trained O")
+    Q_X_trained, Q_O_trained, rewards_X, rewards_O = train(n_games=10000,train_X=True,train_O=True,is_random=False,)
+    print("================================================")
+    print("Testing Trained X vs Trained O")
+    win_stats3 = get_win_statistics(Q_X=Q_X_trained,Q_O=Q_O_trained,sets=5,games_in_set=100, X_strategy='greedy', O_strategy='greedy', eps_X=0.05, eps_O=0.05)
+    plot_results(win_stats3, description="Trained_X_vs_Trained_O")
+    # Save win_stats3 to a file

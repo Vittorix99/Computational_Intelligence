@@ -53,7 +53,10 @@ class TicTacToe():
         #player X has occupied one more slot than player O
         playerX_states = {state for state in states if (state.count(0)%2 == 1 and state.count(1)==state.count(2))} #
         playerO_states =  {state for state in states if (state.count(0)%2 == 0 and state.count(1)==(state.count(2)+1))}
+
+       
         
+
         #States 
         #self.board_full_states = {state for state in states if state.count(0)==0}
         if player == 'X':
@@ -94,6 +97,13 @@ class TicTacToe():
         "Return available positions on the board"
         x,y = np.where(self.board =='__')
         return[(x,y) for x,y in zip(x,y)]
+    def opponent_move(self,position):
+        "Fills out the board in the given position with the action of the opponent"
+        assert position[0] >= 0 and position[0] <= 2 and position[1] >= 0 and position[1] <= 2 , "incorrect position"
+        assert self.board[position] == "__" , "position already filled"
+        assert np.any(self.board == '__') , "Board is complete"
+        assert self.win(self.me) == False and self.win(self.opponent)== False , " Game has already been won"
+        self.board[position] = self.opponent
     
     
     def win(self,player):
@@ -160,7 +170,7 @@ class TicTacToe():
         
         Args:
             Q: Q-table.
-            action_type: Type of action selection policy ('greedy', 'eps_greedy', or 'softmax').
+            action_type: Type of action selection policy ('greedy', 'eps_greedy', 'softmax', or 'random').
             eps: Epsilon value for epsilon-greedy policy.
             temperature: Temperature parameter for softmax policy.
 
@@ -182,8 +192,10 @@ class TicTacToe():
             assert temperature is not None, "Temperature parameter is required for softmax policy"
             softmax_probs = softmax_policy(Q_values, temperature=temperature)
             chosen_action_index = np.random.choice(len(actions), p=softmax_probs)
+        elif action_type == 'random':
+            chosen_action_index = np.random.choice(len(actions))
         else:
-            raise ValueError("Invalid action_type. Supported types are 'greedy', 'eps_greedy', and 'softmax'.")
+            raise ValueError("Invalid action_type. Supported types are 'greedy', 'eps_greedy', 'softmax', and 'random'.")
 
         return self.s1_to_b2[actions[chosen_action_index]]
 
