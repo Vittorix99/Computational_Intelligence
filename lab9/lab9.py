@@ -75,13 +75,13 @@ def roulette_wheel_selection(population, fitnesses):
     selection_probabilities = [f/total_fitness for f in fitnesses]
 
     # Cumulative probabilities
-    cumulative_probabilities = np.cumsum(selection_probabilities)
+    #cumulative_probabilities = np.cumsum(selection_probabilities)
     
     # Ruota della fortuna
     selected = []
     for _ in range(2):
         r = np.random.rand()  # Genera un numero casuale tra 0 e 1
-        for i, cp in enumerate(cumulative_probabilities):
+        for i, cp in enumerate(selection_probabilities):
             if r <= cp:
                 selected.append(population[i])
                 break
@@ -89,8 +89,8 @@ def roulette_wheel_selection(population, fitnesses):
     return selected
 
 
-def create_new_population(population, fitnesses, crossover_rate=0.8, mutation_rate=0.01, tournament_size=2, sel_type="tournament"):
-    new_population = elitism(population, fitnesses)
+def create_new_population(population, fitnesses, crossover_rate=0.8, mutation_rate=0.01, tournament_size=2, sel_type="tournament", el_size = 6):
+    new_population = elitism(population, fitnesses, elite_size=el_size)
     while len(new_population) < len(population):
         parent1, parent2 =  selection_function[sel_type](population, fitnesses, tournament_size) if sel_type == "tournament" else selection_function[sel_type](population, fitnesses)
         child= crossover(parent1, parent2, crossover_rate)
@@ -125,11 +125,12 @@ def calculate_fitnesses(population, problem):
 if __name__ == "__main__":
     instances = [1, 2, 5, 10]
     GENOME_SIZE = 1000
-    generations = [150, 250, 350]
+    generations = [150, 250]
     tournament_sizes = [2, 3, 5, 7]
-    crossover_rates = [0.6, 0.8, 1]
+    crossover_rates = [0.4, 0.6, 0.8, 1]
     mutation_rate = 0.15
-    population_sizes = [20, 50, 100]
+    population_sizes = [40, 80, 160]
+    elite_size = [5, 10, 15] 
     convrgence_generations = 30
     problem_istances = [lib.make_problem(n) for n in instances]
     highest_fitnesses_per_params_combination = {}
@@ -149,7 +150,7 @@ if __name__ == "__main__":
         highest_fitnesses_per_params_combination = {}   
         best_configuration_generations = {}
 
-        for gen, tournament_size, crossover_rate, population_size, sel_type in itertools.product(generations, tournament_sizes, crossover_rates, population_sizes , selection_type):
+        for gen, tournament_size, crossover_rate, population_size, el_size in itertools.product(generations, tournament_sizes, crossover_rates, population_sizes , elite_size):
                     #inizialiiamo la popolazione
                     population = initialize_population(population_size)
                     best_fitness_of_generation = []
@@ -159,7 +160,7 @@ if __name__ == "__main__":
                     problem._calls = 0
                     #ciclo di generazioni (dato un tournament size, crossover rate e population size)
                     print("==========================================")
-                    print(f"GA with tournament size: {tournament_size}, crossover rate: {crossover_rate}, population size: {population_size}, generation: {gen}, selection type : {sel_type}")
+                    print(f"GA with tournament size: {tournament_size}, crossover rate: {crossover_rate}, population size: {population_size}, generation: {gen}, elite size : {el_size}")
                     for generation in tqdm(range(gen), desc= "Generation", position=0, leave=True):
 
                         #calcoliamo il fitness di ogni individuo
@@ -194,10 +195,10 @@ if __name__ == "__main__":
                         
                         #selection and replacement
                         #eseguiamo la selezione e la sostituzione (tournament selection, crossover, mutation)
-                        population = create_new_population(population, fitnesses, crossover_rate, mutation_rate, tournament_size, sel_type)
+                        population = create_new_population(population, fitnesses, crossover_rate, mutation_rate, tournament_size, el_size=el_size)
                     
                     #salviamo il best fitness e il best individual e il numero di fitness_calls per ogni combinazione di tournament size, crossover rate e population size
-                    key =  ( tournament_size, crossover_rate, population_size, gen, sel_type)
+                    key =  ( tournament_size, crossover_rate, population_size, gen, el_size)
 
 
                     fitness_calls = problem._calls
@@ -209,7 +210,7 @@ if __name__ == "__main__":
 
 
 
-                    print(f"instance: {instance}, tournament_size: {tournament_size}, crossover_rate: {crossover_rate}, population_size: {population_size}, best_fitness: {best_overall[0]}, fitness_calls: {fitness_calls}, selection type: {sel_type}")
+                    print(f"instance: {instance}, tournament_size: {tournament_size}, crossover_rate: {crossover_rate}, population_size: {population_size}, best_fitness: {best_overall[0]}, fitness_calls: {fitness_calls}, elitism size= {el_size}")
         # Trova la chiave con il massimo value[0] ovvero il best fitness
         key_max = max(highest_fitnesses_per_params_combination.keys(), key=lambda x: highest_fitnesses_per_params_combination[x][0])
 
