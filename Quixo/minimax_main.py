@@ -1,5 +1,5 @@
 import random
-from game import Game, Move, Player
+from game2 import Game, Move, Player
 from minimax_player import MinimaxPlayer
 from collections import namedtuple
 import matplotlib.pyplot as plt
