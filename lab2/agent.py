@@ -11,11 +11,6 @@ from nim import *
 #Genome è una tupla di due elementi: il primo array indica i pesi dati a ogni strategia, il secondo array indica quanti oggetti sottrarre dall i-esima riga
 
 
-
-
-
-
-
 class NimAgent:
     def __init__(self, genoma, interested = False):
         self.genome_strategy = genoma[0]
@@ -224,10 +219,9 @@ def gabriele(state: Nim) -> Nimply:
 
 def adaptive(state: Nim) -> Nimply:
     """A strategy that can adapt its parameters"""
-    genome_row = np.load("genome_row.npy")
-    genome_strategy = np.load("genome_strategy.npy")
-    genome = ([1,0,0,0,0,0], genome_row)
-
+    genome_row = np.load("./Computational_Intelligence/lab2/genome_row.npy")
+    genome_strategy = np.load("./Computational_Intelligence/lab2/genome_strategy.npy")
+    genome = (genome_strategy, genome_row)
     agent = NimAgent(genome)
     return agent.make_move(state)
 

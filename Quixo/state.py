@@ -1,25 +1,21 @@
 import numpy as np
 from copy import deepcopy
 from enum import Enum
+from functools import lru_cache
 
+from game import Move
 from collections import namedtuple
 QuixoMove = namedtuple('QuixoMove', ['position', 'direction'])
 
-class Move(Enum):
-    '''
-    Selects where you want to place the taken piece. The rest of the pieces are shifted
-    '''
-    TOP = 0
-    BOTTOM = 1
-    LEFT = 2
-    RIGHT = 3
 
 
+NUM_ROWS = 5
 
 class GameState:
     def __init__(self, board: np.ndarray, current_player: int, winner = None  ):
         self.board = board
         self.current_player = current_player
+        self.winner = winner
 
     def __hash__(self):
         return hash((self.board.tobytes(), self.current_player))
@@ -33,7 +29,10 @@ class GameState:
 
         return f"Board:\n{board}\nCurrent Player: {self.current_player}"
 
-        
+    def print(self):
+        '''Prints the board. -1 are neutral pieces, 0 are pieces of player 0, 1 pieces of player 1'''
+        for row in self.board:
+            print(' '.join('X' if cell == 0 else 'O' if cell == 1 else '-' for cell in row))    
 
     def __repr__(self):
         return self.__str__()
@@ -49,37 +48,37 @@ class GameState:
         # for each row
         player = state.get_current_player()
         winner = -1
-        for x in range(state._board.shape[0]):
+        for x in range(state.board.shape[0]):
             # if a player has completed an entire row
-            if state._board[x, 0] != -1 and all(state._board[x, :] == state._board[x, 0]):
+            if state.board[x, 0] != -1 and all(state.board[x, :] == state.board[x, 0]):
                 # return winner is this guy
-                winner = state._board[x, 0]
+                winner = state.board[x, 0]
         if winner > -1 and winner != state.get_current_player():
             return winner
         # for each column
-        for y in range(state._board.shape[1]):
+        for y in range(state.board.shape[1]):
             # if a player has completed an entire column
-            if state._board[0, y] != -1 and all(state._board[:, y] == state._board[0, y]):
+            if state.board[0, y] != -1 and all(state.board[:, y] == state.board[0, y]):
                 # return the relative id
-                winner = state._board[0, y]
+                winner = state.board[0, y]
         if winner > -1 and winner != state.get_current_player():
             return winner
         # if a player has completed the principal diagonal
-        if state._board[0, 0] != -1 and all(
-            [state._board[x, x]
-                for x in range(state._board.shape[0])] == state._board[0, 0]
+        if state.board[0, 0] != -1 and all(
+            [state.board[x, x]
+                for x in range(state.board.shape[0])] == state.board[0, 0]
         ):
             # return the relative id
-            winner = state._board[0, 0]
+            winner = state.board[0, 0]
         if winner > -1 and winner != state.get_current_player():
             return winner
         # if a player has completed the secondary diagonal
-        if state._board[0, -1] != -1 and all(
-            [state._board[x, -(x + 1)]
-             for x in range(state._board.shape[0])] == state._board[0, -1]
+        if state.board[0, -1] != -1 and all(
+            [state.board[x, -(x + 1)]
+             for x in range(state.board.shape[0])] == state.board[0, -1]
         ):
             # return the relative id
-            winner = state._board[0, -1]
+            winner = state.board[0, -1]
         return winner
     
 
@@ -91,29 +90,34 @@ class GameState:
     
 
 
-    def apply_move(self, from_pos: tuple[int, int], slide: Move, player_id: int) -> bool:
+    def apply_move(self, mossa:QuixoMove, player_id: int) -> bool:
         '''Perform a move'''
         if player_id > 2:
             return False
         # In numpy arrays, the first index is the column, the second is the row
         # So, we need to swap the coordinates
-
-        new_state = deepcopy(self._board[(from_pos[1], from_pos[0])])
-        acceptable_state = self.__take(new_state,(from_pos[1], from_pos[0]), player_id)
+        
+            
+        prev_value = deepcopy(self.board[(mossa.position[0], mossa.position[1])])
+        new_state = deepcopy(self)
+        acceptable_state = self.__take(new_state, (mossa.position[0],mossa.position[1]) , player_id)
         if acceptable_state!= False:
-            acceptable_state = self.__slide(acceptable_state,(from_pos[1], from_pos[0]), slide)
+            acceptable_state = self.__slide(new_state,(mossa.position[0],mossa.position[1]), mossa.direction)
             if acceptable_state != False:
-                winner = self.check_winner(acceptable_state) if self.check_winner(acceptable_state) != -1 else None
-                acceptable_state.winner = winner  
+                winner = self.check_winner(new_state) 
+                if winner == -1:
+                    winner = None
+                new_state.winner = winner  
 
-                return acceptable_state
+                return new_state
         return False 
                 
             
     @staticmethod
-    def __take(self,state,  from_pos: tuple[int, int], player_id: int) -> bool:
+    def __take(state,  from_pos: tuple[int, int], player_id: int) -> bool:
         '''Take piece'''
         # acceptable only if in border
+       
         acceptable: bool = (
             # check if it is in the first row
             (from_pos[0] == 0 and from_pos[1] < 5)
@@ -124,9 +128,10 @@ class GameState:
             # check if it is in the last column
             or (from_pos[1] == 4 and from_pos[0] < 5)
             # and check if the piece can be moved by the current player
-        ) and (state._board[from_pos] < 0 or state._board[from_pos] == player_id)
+        ) and (state.board[from_pos] < 0 or state.board[from_pos] == player_id)
+      
         if acceptable:
-              state._board[from_pos] = player_id
+              state.board[from_pos] = player_id
               return acceptable
               
         return acceptable
@@ -134,7 +139,7 @@ class GameState:
     
     
     
-    def __slide(self, state, from_pos: tuple[int, int], slide: Move) -> bool:
+    def __slide( state, from_pos: tuple[int, int], slide: Move) -> bool:
         '''Slide the other pieces'''
         # define the corners
         SIDES = [(0, 0), (0, 4), (4, 0), (4, 4)]
@@ -175,48 +180,52 @@ class GameState:
         # if it is
         if acceptable:
             # take the piece
-            piece = state._board[from_pos]
+            piece = state.board[from_pos]
             # if the player wants to slide it to the left
             if slide == Move.LEFT:
                 # for each column starting from the column of the piece and moving to the left
                 for i in range(from_pos[1], 0, -1):
                     # copy the value contained in the same row and the previous column
-                    state._board[(from_pos[0], i)] = state._board[(
+                    state.board[(from_pos[0], i)] = state.board[(
                         from_pos[0], i - 1)]
                 # move the piece to the left
-                state._board[(from_pos[0], 0)] = piece
+                state.board[(from_pos[0], 0)] = piece
             # if the player wants to slide it to the right
             elif slide == Move.RIGHT:
                 # for each column starting from the column of the piece and moving to the right
-                for i in range(from_pos[1], state._board.shape[1] - 1, 1):
+                for i in range(from_pos[1], state.board.shape[1] - 1, 1):
                     # copy the value contained in the same row and the following column
-                    state._board[(from_pos[0], i)] = state._board[(
+                    state.board[(from_pos[0], i)] = state.board[(
                         from_pos[0], i + 1)]
                 # move the piece to the right
-                state._board[(from_pos[0], state._board.shape[1] - 1)] = piece
+                state.board[(from_pos[0], state.board.shape[1] - 1)] = piece
             # if the player wants to slide it upward
             elif slide == Move.TOP:
                 # for each row starting from the row of the piece and going upward
                 for i in range(from_pos[0], 0, -1):
                     # copy the value contained in the same column and the previous row
-                    state._board[(i, from_pos[1])] = state._board[(
+                    state.board[(i, from_pos[1])] = state.board[(
                         i - 1, from_pos[1])]
                 # move the piece up
-                state._board[(0, from_pos[1])] = piece
+                state.board[(0, from_pos[1])] = piece
             # if the player wants to slide it downward
             elif slide == Move.BOTTOM:
                 # for each row starting from the row of the piece and going downward
-                for i in range(from_pos[0], state._board.shape[0] - 1, 1):
+                for i in range(from_pos[0], state.board.shape[0] - 1, 1):
                     # copy the value contained in the same column and the following row
-                    state._board[(i, from_pos[1])] = state._board[(
+                    state.board[(i, from_pos[1])] = state.board[(
                         i + 1, from_pos[1])]
                 # move the piece down
-                state._board[(state._board.shape[0] - 1, from_pos[1])] = piece
+                state.board[(state.board.shape[0] - 1, from_pos[1])] = piece
         return acceptable
     
     
-    def check_move(self, move: QuixoMove) -> bool:
+    def check_move(self,  move: QuixoMove, player) -> bool:
         state = deepcopy(self)
+       
+       
+        if self.check_winner(state) != -1:
+            return False
         acceptable_position: bool = (
             # check if it is in the first row
             (move.position[0] == 0 and move.position[1] < 5)
@@ -227,7 +236,7 @@ class GameState:
             # check if it is in the last column
             or (move.position[1] == 4 and move.position[0] < 5)
             # and check if the piece can be moved by the current player
-        ) and (state._board[move.position] < 0 or state._board[move.position] == state.current_player)
+        ) and (state.board[move.position] < 0 or state.board[move.position] == player)
 
         SIDES = [(0, 0), (0, 4), (4, 0), (4, 4)]
         # if the piece position is not in a corner
@@ -271,13 +280,92 @@ class GameState:
             return False
         
 
-    def get_moves(self,):
+    def get_moves(self, player):
         moves = []
         for row_index, row in enumerate(self.board):
             for column_index, column in enumerate(row):
                 for move in Move:
                    quixoMove = QuixoMove((row_index, column_index), move)
-                   if self.check_move(quixoMove):
+                   if self.check_move(quixoMove, player):
                           moves.append(quixoMove)
         return moves
+    
+
+class GameNode:
+
+        def __init__ (self, maximizing_player, state: GameState, action: QuixoMove, available_actions: list[QuixoMove], parent=None, step=0,max_steps= 100,is_terminal=False):
+            
+            self.state = state
+            self.action = action
+            self.available_actions = available_actions
+            self.parent = parent
+            self.children = []
+            self.step = step
+            self.max_steps = max_steps
+            self.is_terminal = False  
+            self.Maximize  = maximizing_player
+
+
+        def add_child(self, child):
+            if child not in self.children:
+                    self.children.append(child)
+            
+        def expand(self,):
+           if self.Maximize:
+               player = self.state.get_current_player()
+           else:
+                player = 1 - self.state.get_current_player()
+            
+           if  self.is_terminal == False and self.step <= self.max_steps:
+            for action in self.available_actions:
+              
+                   
+                    childstate = self.state.apply_move(action, player)
+                    if childstate:
+                       
+                      
+                        
+                        terminal = True if childstate.winner != None else False 
+                        
+                           
+
+
+                        child = GameNode(True if self.Maximize==False else False, childstate, action, childstate.get_moves(1-player), self, self.step + 1, self.max_steps, terminal )
+                        self.add_child(child)
+        
+            
+
+
+        def get_action(self):
+             return ((self.action.position[1], self.action.position[0]),  self.action.direction)
+
+            
+
+
+class GameTree:
+
+    def __init__(self, root, depth):
+        """
+        :param root: root node (GameNode)
+        :param depth: desired depth of the game tree
+
+        Constructs a game tree where the root is given and expands it to the given depth.
+        """
+        self.root = root
+        self.expand_tree(self.root, depth)
+    
+    @lru_cache()
+    def expand_tree(self, node, depth):
+        """
+        Recursively expands the tree from the given node to the specified depth.
+
+        :param node: the node to expand
+        :param depth: the remaining depth to expand
+        """
+        if depth > 0:
+            node.expand()
+            for child in node.children:
+                self.expand_tree(child, depth - 1)
+        
+
     

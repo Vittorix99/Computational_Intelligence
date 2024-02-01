@@ -43,7 +43,7 @@ class Nim:
                 moves2 += 1
             turn = 1 - turn
     
-        winner = (1-turn) + 1
+        winner = 1 if turn == 0 else 2
               
             
         #print(f"status: Player {str(winner)} won!")

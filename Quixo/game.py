@@ -2,12 +2,19 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from enum import Enum
 import numpy as np
-import state 
-from state import GameState, QuixoMove, Move    
 
-# Rules on PDF and https://cdn.1j1ju.com/medias/a8/5e/26-quixo-rulebook.pdf
+# Rules on PDF
 
+MAX_GAME_STEPS = 100
 
+class Move(Enum):
+    '''
+    Selects where you want to place the taken piece. The rest of the pieces are shifted
+    '''
+    TOP = 0
+    BOTTOM = 1
+    LEFT = 2
+    RIGHT = 3
 
 
 class Player(ABC):
@@ -31,6 +38,7 @@ class Game(object):
     def __init__(self) -> None:
         self._board = np.ones((5, 5), dtype=np.uint8) * -1
         self.current_player_idx = 1
+        self.moves_count = 0
 
     def get_board(self) -> np.ndarray:
         '''
@@ -46,53 +54,38 @@ class Game(object):
 
     def print(self):
         '''Prints the board. -1 are neutral pieces, 0 are pieces of player 0, 1 pieces of player 1'''
-        for row in self.board:
+        for row in self._board:
             print(' '.join('X' if cell == 0 else 'O' if cell == 1 else '-' for cell in row))
-
-
-    def to_state(self):
-        winner = self.check_winner() if self.check_winner() != -1 else None
-        
-        return state.State(self._board, self.current_player_idx, winner)
-
-
+    
     def check_winner(self) -> int:
         '''Check the winner. Returns the player ID of the winner if any, otherwise returns -1'''
         # for each row
-        player = self.get_current_player()
-        winner = -1
         for x in range(self._board.shape[0]):
             # if a player has completed an entire row
             if self._board[x, 0] != -1 and all(self._board[x, :] == self._board[x, 0]):
-                # return winner is this guy
-                winner = self._board[x, 0]
-        if winner > -1 and winner != self.get_current_player():
-            return winner
+                # return the relative id
+                return self._board[x, 0]
         # for each column
         for y in range(self._board.shape[1]):
             # if a player has completed an entire column
             if self._board[0, y] != -1 and all(self._board[:, y] == self._board[0, y]):
                 # return the relative id
-                winner = self._board[0, y]
-        if winner > -1 and winner != self.get_current_player():
-            return winner
+                return self._board[0, y]
         # if a player has completed the principal diagonal
         if self._board[0, 0] != -1 and all(
             [self._board[x, x]
                 for x in range(self._board.shape[0])] == self._board[0, 0]
         ):
             # return the relative id
-            winner = self._board[0, 0]
-        if winner > -1 and winner != self.get_current_player():
-            return winner
+            return self._board[0, 0]
         # if a player has completed the secondary diagonal
         if self._board[0, -1] != -1 and all(
             [self._board[x, -(x + 1)]
              for x in range(self._board.shape[0])] == self._board[0, -1]
         ):
             # return the relative id
-            winner = self._board[0, -1]
-        return winner
+            return self._board[0, -1]
+        return -1
 
     def play(self, player1: Player, player2: Player) -> int:
         '''Play the game. Returns the winning player'''
@@ -108,6 +101,8 @@ class Game(object):
                 ok = self.__move(from_pos, slide, self.current_player_idx)
             winner = self.check_winner()
         return winner
+  
+        
 
     def __move(self, from_pos: tuple[int, int], slide: Move, player_id: int) -> bool:
         '''Perform a move'''
@@ -219,3 +214,28 @@ class Game(object):
                 # move the piece down
                 self._board[(self._board.shape[0] - 1, from_pos[1])] = piece
         return acceptable
+
+
+    def get_winning_sequence(self, _board) -> dict:
+        '''Checks and returns the winning sequence if there is a winner'''
+
+        # Controllo per le righe
+        for x in range(_board.shape[0]):
+            if _board[x, 0] != -1 and all(_board[x, :] == _board[x, 0]):
+                return {"type": "r", "index": x}
+
+        # Controllo per le colonne
+        for y in range(self._board.shape[1]):
+            if _board[0, y] != -1 and all(_board[:, y] == _board[0, y]):
+                return {"type": "c", "index": y}
+
+        # Controllo per la diagonale principale
+        if _board[0, 0] != -1 and all(_board[x, x] == _board[0, 0] for x in range(_board.shape[0])):
+            return {"type": "diag"}
+
+        # Controllo per la diagonale secondaria
+        if _board[0, -1] != -1 and all(_board[x, -(x + 1)] == _board[0, -1] for x in range(_board.shape[0])):
+            return {"type": "antidiag"}
+
+        # Nessuna sequenza vincente trovata
+        return None

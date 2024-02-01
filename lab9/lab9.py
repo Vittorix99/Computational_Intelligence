@@ -26,11 +26,6 @@ def elitism(population, fitnesses, elite_size=6):
     return [individual for individual, _ in sorted_population[:elite_size]]
 
 
-def crossover(parent1, parent2, crossover_rate=0.8):
-    crossover_point = random.randint(1, GENOME_SIZE - 1)
-    child1 = np.concatenate([parent1[:crossover_point], parent2[crossover_point:]])
-    child2 = np.concatenate([parent2[:crossover_point], parent1[crossover_point:]])
-    return child1, child2
 
 
 def mutate(genome, mutation_rate=0.01):
@@ -43,11 +38,6 @@ def mutate(genome, mutation_rate=0.01):
             genome[i] = 1 - genome[i]
     return genome
 
-
-
-def elitism(population, fitnesses, elite_size=2):
-    sorted_population = sorted(zip(population, fitnesses), key=lambda x: x[1], reverse=True)
-    return [individual for individual, _ in sorted_population[:elite_size]]
 
 
 
@@ -125,7 +115,7 @@ def calculate_fitnesses(population, problem):
 if __name__ == "__main__":
     instances = [1, 2, 5, 10]
     GENOME_SIZE = 1000
-    generations = [150, 250]
+    generations = [150]
     tournament_sizes = [2, 3, 5, 7]
     crossover_rates = [0.4, 0.6, 0.8, 1]
     mutation_rate = 0.15

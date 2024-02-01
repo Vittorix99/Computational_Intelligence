@@ -7,9 +7,6 @@ import seaborn as sns
 
 map_2d_1d = {(0, 0): 0, (0, 1): 1,(0, 2): 2, (1, 0): 3, (1, 1): 4,(1, 2): 5,(2, 0): 6,(2, 1): 7,(2, 2): 8}
 
-
-
-
 def initialize_Q(S):
     '''Initialize Q function as a nested dictionary
     '''
@@ -260,7 +257,8 @@ def train(n_games=1000,alpha = 0.5, gamma = 0.9,train_X=True,train_O=False,is_ra
     m_avg = moving_average(rewards, w=200)
     sns.lineplot(x=range(len(m_avg)), y=m_avg).set_title('Learning Curve')
 
-    plt.savefig(f'learning_curve_trainX_{train_X}_trainO_{train_O}')  # Save the plot as a PNG file
+    plt.savefig(f'learning_curve_trainX_{train_X}_trainO_{train_O}') 
+    plt.close() # Save the plot as a PNG file
     return Q_X,Q_O,rewards_X,rewards_O
 
 
@@ -356,13 +354,16 @@ def plot_results(win_statistics, description=None):
     sns.boxplot(x="Result", y="N", data=win_stats_df_long, ax=axs1[0]).set_title("Distribution of Wins, Losses and Ties")
     sns.barplot(x="index", y="N", data=final_results_agg, ax=axs1[1]).set_title('Total No of Wins, Losses and Ties')
     sns.heatmap(win_rate_X, annot=True, ax=axs1[2]).set_title("Player X: % of wins for first move")
-    fig1.savefig("figures/"+description+"_fig1.png")
+    fig1.savefig(description+"_fig1.png")
+    plt.close(fig1)
 
     fig2, axs2 = plt.subplots(nrows=1, ncols=3, figsize=(18, 6))
+    sns.boxplot(x="Result", y="N", data=win_stats_df_long, ax=axs2[1]).set_title("Distribution of Wins, Losses and Ties")
+    sns.barplot(x="index", y="N", data=final_results_agg, ax=axs2[2]).set_title('Total No of Wins, Losses and Ties')
     sns.heatmap(win_rate_O, annot=True, ax=axs2[0]).set_title("Player O: % of wins for first move")
-    sns.barplot(x='winning_sequence', y='N', data=win_seq_X, order=['R1','R2','R3','C1','C2','C3','D1','D2'], ax=axs2[1]).set_title("Player X: winning sequences")
-    sns.barplot(x='winning_sequence', y='N', data=win_seq_O, order=['R1','R2','R3','C1','C2','C3','D1','D2'], ax=axs2[2]).set_title("Player O: winning sequences")
-    fig1.savefig("figures/"+description+"_fig2.png")
+    fig2.savefig(description+"_fig2.png")
+    plt.close(fig2)
+  
 
 
 # Assicurati di avere le funzioni get_win_rate e get_win_seqs definite o importate in modo appropriato
@@ -400,6 +401,8 @@ if __name__ == "__main__":
     win_stats = get_win_statistics(Q_X=Q_X_trained,Q_O=Q_O,sets=5,games_in_set=100, X_strategy='eps_greedy', O_strategy='random', eps_X=0.05, eps_O=1.0, )
     plot_results(win_stats, description="Trained_X_vs_Random_O")
     # Save win_stats to a file
+
+    
 
 
     # ...
