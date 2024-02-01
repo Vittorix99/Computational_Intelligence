@@ -109,34 +109,31 @@ def play_games(player1:Player, player2:Player, num_games:int):
              player2_sequence_dictionary[key] = Statistics(total_steps/total_entries, player2_sequence_dictionary[key].sequence_count)
 
     
-         
+
      filename = f"{player1.name}_vs_{player2.name}_results.txt"
-     with open(filename, 'w') as f:  
+     print("================================================================")
+     print(f"Player {player1.name} percentage of wins: {player1_wins/num_games*100}%")
+     print(f"Player {player2.name} percentage of wins: {player2_wins/num_games*100}%")
+     print(f"Draw percentage: {draws/num_games*100}%")
+     print("================================================================")
 
-
-        print("================================================================",f)
-        print(f"Player {player1.name} percentage of wins: {player1_wins/num_games*100}%",f)
-        print(f"Player {player2.name} percentage of wins: {player2_wins/num_games*100}%",f)
-        print(f"Draw percentage: {draws/num_games*100}%",f)
-        print("================================================================")
-
-        print(f"Num games: {num_games}",f)
-        print(f"Player {player1.name}: {player1_wins}",f)
-        print(f"Player {player2.name}: {player2_wins}",f)
-        print("================================================================")
-        if len(num_steps_player1) > 0:
-    
-            print(f"Player1 {player1.name} - Average num steps: {sum(num_steps_player1)/len(num_steps_player1)}",f)
-            print(f"Player1 {player1.name} - Max num steps:{max(num_steps_player1)}")
-            print(f"Player1 {player1.name} - Min num steps : {min(num_steps_player1)}")
-        print(f"Player1 {player1.name} Number of draws: {draws}")
-        print("================================================================")
-        if len(num_steps_player2) > 0:
-            print(f"Player2 {player2.name} - Average num steps: {sum(num_steps_player2)/len(num_steps_player2)}")
-            print(f"Player2 {player2.name} - Max num steps: {max(num_steps_player2)}")
-            print(f"Player2 {player2.name} - Min num steps : {min(num_steps_player2)}")
-        print(f"Player2 {player2.name} Number of draws: {draws}")
-        print("================================================================")
+     print(f"Num games: {num_games}")
+                
+     print(f"Player {player1.name}: {player1_wins}")
+     print(f"Player {player2.name}: {player2_wins}")
+     print("================================================================")
+     if len(num_steps_player1) > 0:
+                    print(f"Player1 {player1.name} - Average num steps: {sum(num_steps_player1)/len(num_steps_player1)}")
+                    print(f"Player1 {player1.name} - Max num steps:{max(num_steps_player1)}")
+                    print(f"Player1 {player1.name} - Min num steps : {min(num_steps_player1)}")
+     print(f"Player1 {player1.name} Number of draws: {draws}")
+     print("================================================================")
+     if len(num_steps_player2) > 0:
+                    print(f"Player2 {player2.name} - Average num steps: {sum(num_steps_player2)/len(num_steps_player2)}")
+                    print(f"Player2 {player2.name} - Max num steps: {max(num_steps_player2)}")
+                    print(f"Player2 {player2.name} - Min num steps : {min(num_steps_player2)}")
+     print(f"Player2 {player2.name} Number of draws: {draws}")
+     print("================================================================")
      plot_statistics(player1_wins, player2_wins, draws, num_steps_player1, player1_sequence_dictionary, player1.name, player2.name, title=f"{player1.name} {dict_symbol[0]} vs {player2.name} {dict_symbol[1]}" ) 
      plot_statistics(player2_wins, player1_wins, draws, num_steps_player2, player2_sequence_dictionary, player2.name, player1.name, title=f"{player1.name} {dict_symbol[0]} vs {player2.name} {dict_symbol[1]}" )
 
